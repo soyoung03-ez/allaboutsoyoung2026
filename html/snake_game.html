@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+       <meta charset="utf-8" />
+       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+       <meta name="description" content="" />
+       <meta name="author" content="" />
+       <title>snake game</title>
+       <!-- Favicon-->
+       <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+       <!-- Font Awesome icons (free version)-->
+       <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+       <!-- Google fonts-->
+       <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css" />
+       <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css" />
+       <!-- Core theme CSS (includes Bootstrap)-->
+       <link href="../css/styles.css" rel="stylesheet" />
+       
+       <!-- Bootstrap core JS-->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Core theme JS-->
+        <script src="../js/scripts.js"></script>
+        <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+        <!-- * *                               SB Forms JS                               * *-->
+        <!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->
+        <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+        <script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
+
+<style>
+  :root{
+    --bg-deep:#0f1b13;
+    --bg-board:#162a1c;
+    --grid-line:#1f3826;
+    --cream:#eef0d8;
+    --gold:#e8b03d;
+    --vine:#3f7a4a;
+    --shadow:#08110b;
+  }
+  *{box-sizing:border-box;}
+  #snakeAppRoot{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 20% 15%, #1c331f 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, #1a2e1a 0%, transparent 50%),
+      var(--bg-deep);
+    font-family: 'Courier New', monospace;
+    color:var(--cream);
+    padding:20px;
+    padding-top:96px; /* clears the fixed-top navbar so it doesn't overlap the game */
+    box-sizing:border-box;
+  }
+  .wrap{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+    align-items:center;
+    justify-content:center;
+  }
+  .panel{
+    background:linear-gradient(160deg,#1a2e1e,#101f14);
+    border:3px solid var(--vine);
+    border-radius:14px;
+    padding:18px 22px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(255,255,255,0.03);
+    width:488px;
+    max-width:100%;
+  }
+  .panel-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+  }
+  .panel-col + .panel-col{
+    border-left:1px solid rgba(255,255,255,0.08);
+    padding-left:24px;
+  }
+  @media (max-width:560px){
+    .panel-grid{ grid-template-columns:1fr; }
+    .panel-col + .panel-col{ border-left:none; padding-left:0; border-top:1px solid rgba(255,255,255,0.08); padding-top:14px; }
+  }
+  #snakeAppRoot h1{
+    font-size:22px;
+    letter-spacing:2px;
+    margin:0 0 4px;
+    color:var(--gold);
+    text-shadow:0 2px 0 var(--shadow);
+  }
+  .sub{
+    font-size:11px;
+    color:#9fb89f;
+    margin:0 0 16px;
+    letter-spacing:1px;
+  }
+  .stat-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    margin-bottom:10px;
+    background:rgba(0,0,0,0.25);
+    padding:8px 10px;
+    border-radius:8px;
+  }
+  .stat-row span:first-child{color:#9fb89f;}
+  .stat-row span:last-child{color:var(--gold); font-weight:bold;}
+  .section-label{
+    font-size:11px;
+    color:#9fb89f;
+    letter-spacing:1px;
+    margin:16px 0 8px;
+    text-transform:uppercase;
+  }
+  .swatches{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+  }
+  .swatch{
+    width:100%;
+    aspect-ratio:1;
+    border-radius:8px;
+    cursor:pointer;
+    border:2px solid rgba(255,255,255,0.15);
+    transition:transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .swatch:hover{ transform:translateY(-2px); }
+  .swatch.active{
+    border-color:var(--gold);
+    box-shadow:0 0 0 2px var(--gold), 0 4px 10px rgba(0,0,0,0.4);
+  }
+  .fruit-list{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .fruit-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    padding:6px 8px;
+    border-radius:6px;
+    background:rgba(0,0,0,0.15);
+    opacity:0.55;
+    transition:opacity 0.2s, background 0.2s;
+  }
+  .fruit-item.current{
+    opacity:1;
+    background:rgba(232,176,61,0.15);
+    box-shadow:inset 0 0 0 1px rgba(232,176,61,0.4);
+  }
+  .fruit-icon{ font-size:16px; line-height:1; }
+  #snakeAppRoot .btn{
+    width:100%;
+    padding:10px;
+    margin-top:14px;
+    background:var(--gold);
+    color:#1a1208;
+    border:none;
+    border-radius:8px;
+    font-family:inherit;
+    font-weight:bold;
+    letter-spacing:1px;
+    cursor:pointer;
+    font-size:13px;
+    transition:transform 0.1s, filter 0.1s;
+  }
+  #snakeAppRoot .btn:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+  #snakeAppRoot .btn:active{ transform:translateY(0); }
+  #snakeAppRoot .btn.secondary{
+    background:transparent;
+    border:2px solid var(--vine);
+    color:var(--cream);
+  }
+  #boardWrap{
+    position:relative;
+    border:4px solid var(--vine);
+    border-radius:10px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.55);
+    background:var(--bg-board);
+  }
+  canvas{
+    display:block;
+    border-radius:6px;
+  }
+  #overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:rgba(8,15,9,0.82);
+    border-radius:6px;
+    text-align:center;
+    padding:20px;
+  }
+  #overlay.hidden{ display:none; }
+  #overlay h2{
+    color:var(--gold);
+    font-size:26px;
+    margin:0 0 8px;
+    letter-spacing:1px;
+  }
+  #overlay p{
+    color:#cfe0cf;
+    font-size:13px;
+    margin:0 0 18px;
+    max-width:280px;
+  }
+  .hint{
+    font-size:11px;
+    color:#7c9a7c;
+    margin-top:14px;
+    line-height:1.6;
+    text-align:center;
+  }
+  kbd{
+    background:#0c150e;
+    border:1px solid #2c4a30;
+    border-radius:4px;
+    padding:1px 6px;
+    font-size:10px;
+  }
+</style>
+   </head>
+
+    <body id="page-top">
+       <!-- Navigation-->
+       <nav class="navbar navbar-expand-lg bg-secondary text-uppercase fixed-top" id="mainNav">
+           <div class="container">
+               <a class="navbar-brand" href="#page-top">All About Soyoung</a>
+               <button class="navbar-toggler text-uppercase font-weight-bold bg-primary text-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                   Menu
+                   <i class="fas fa-bars"></i>
+               </button>
+               <div class="collapse navbar-collapse" id="navbarResponsive">
+                   <ul class="navbar-nav ms-auto">
+                       <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="../html/index.html">Home</a></li>
+                       <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="../html/resume.html">resume</a></li>
+                       <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href=#>Game</a></li>
+                       <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="../html/weightloss.html">weight loss</a></li>
+                   </ul>
+               </div>
+           </div>
+       </nav>
+
+<div id="snakeAppRoot">
+<div class="wrap">
+
+  <div id="boardWrap">
+    <canvas id="game" width="480" height="480"></canvas>
+    <div id="overlay">
+      <h2 id="overlayTitle">SNAKE</h2>
+      <p id="overlayText">Eat fruit, grow long, don't bite yourself or the walls. Pick your colors, then start.</p>
+      <button class="btn" id="startBtn">START GAME</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h1>SNAKE &amp; FRUIT</h1>
+    <p class="sub">customize your serpent</p>
+
+    <div class="panel-grid">
+      <div class="panel-col">
+        <div class="stat-row"><span>SCORE</span><span id="scoreVal">0</span></div>
+        <div class="stat-row"><span>BEST</span><span id="bestVal">0</span></div>
+        <div class="stat-row"><span>FRUITS EATEN</span><span id="eatenVal">0</span></div>
+
+        <div class="section-label">Snake color</div>
+        <div class="swatches" id="colorSwatches"></div>
+      </div>
+
+      <div class="panel-col">
+        <div class="section-label">Fruit cycle</div>
+        <div class="fruit-list" id="fruitList"></div>
+      </div>
+    </div>
+
+    <button class="btn secondary" id="restartBtn">RESTART</button>
+
+    <div class="hint">
+      <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move<br>
+      <kbd>space</kbd> to pause
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const GRID = 24;
+  const CELLS = canvas.width / GRID; // 20
+
+  // ---------- Fruit definitions ----------
+  // each fruit has a "draw" key (drawn with canvas shapes, not emoji, so it always renders)
+  const FRUITS = [
+    { name:'Apple',      draw:'apple',      points:10 },
+    { name:'Strawberry', draw:'strawberry', points:15 },
+    { name:'Watermelon', draw:'watermelon', points:20 },
+    { name:'Grape',      draw:'grape',      points:12 },
+    { name:'Banana',     draw:'banana',     points:8  },
+    { name:'Orange',     draw:'orange',     points:10 },
+    { name:'Cherry',     draw:'cherry',     points:18 },
+    { name:'Pineapple',  draw:'pineapple',  points:25 },
+  ];
+
+  // ---------- Snake colors ----------
+  const COLORS = [
+    { name:'Classic Green', body:'#5fd35f', head:'#3fae3f' },
+    { name:'Ocean Blue',    body:'#4fb6e6', head:'#2f8fc2' },
+    { name:'Sunset Orange', body:'#f08a3c', head:'#cf6a1e' },
+    { name:'Royal Purple',  body:'#a974e0', head:'#8650bf' },
+    { name:'Hot Pink',      body:'#ef5fa7', head:'#cf3d85' },
+    { name:'Lemon Yellow',  body:'#e8d23c', head:'#c7ad1e' },
+    { name:'Crimson Red',   body:'#e8543c', head:'#c2331e' },
+    { name:'Charcoal',      body:'#8d99a5', head:'#5d6873' },
+  ];
+
+  let snakeColorIdx = 0;
+  let fruitIdx = 0;
+  let score = 0;
+  let best = parseInt(localStorage.getItem('snakeBest') || '0', 10);
+  let eaten = 0;
+  let snake, dir, nextDir, food, speed, timer, running, paused;
+
+  document.getElementById('bestVal').textContent = best;
+
+  // ---------- Build color swatches ----------
+  const swatchWrap = document.getElementById('colorSwatches');
+  COLORS.forEach((c, i) => {
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (i === snakeColorIdx ? ' active' : '');
+    sw.style.background = `linear-gradient(135deg, ${c.body}, ${c.head})`;
+    sw.title = c.name;
+    sw.addEventListener('click', () => {
+      snakeColorIdx = i;
+      document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      draw(); // redraw immediately with new color
+    });
+    swatchWrap.appendChild(sw);
+  });
+
+  // ---------- Build fruit list ----------
+  const fruitListEl = document.getElementById('fruitList');
+  function miniIconCanvas(drawKey){
+    const c = document.createElement('canvas');
+    c.width = 20; c.height = 20;
+    c.style.width = '20px';
+    c.style.height = '20px';
+    c.style.flex = '0 0 auto';
+    const cctx = c.getContext('2d');
+    drawFruitShape(cctx, drawKey, 10, 10, 9);
+    return c;
+  }
+  function renderFruitList(){
+    fruitListEl.innerHTML = '';
+    FRUITS.forEach((f, i) => {
+      const item = document.createElement('div');
+      item.className = 'fruit-item' + (i === fruitIdx ? ' current' : '');
+      const icon = miniIconCanvas(f.draw);
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = f.name;
+      const ptsSpan = document.createElement('span');
+      ptsSpan.style.marginLeft = 'auto';
+      ptsSpan.style.color = '#e8b03d';
+      ptsSpan.textContent = `+${f.points}`;
+      item.appendChild(icon);
+      item.appendChild(nameSpan);
+      item.appendChild(ptsSpan);
+      fruitListEl.appendChild(item);
+    });
+  }
+  renderFruitList();
+
+  // ---------- Game setup ----------
+  function resetGame(){
+    snake = [
+      {x:10,y:10},
+      {x:9,y:10},
+      {x:8,y:10},
+    ];
+    dir = {x:1,y:0};
+    nextDir = {x:1,y:0};
+    score = 0;
+    eaten = 0;
+    fruitIdx = 0;
+    speed = 130;
+    paused = false;
+    placeFood();
+    updateStats();
+    renderFruitList();
+  }
+
+  function placeFood(){
+    let valid = false;
+    let pos;
+    while(!valid){
+      pos = { x: Math.floor(Math.random()*CELLS), y: Math.floor(Math.random()*CELLS) };
+      valid = !snake.some(s => s.x === pos.x && s.y === pos.y);
+    }
+    food = pos;
+  }
+
+  function updateStats(){
+    document.getElementById('scoreVal').textContent = score;
+    document.getElementById('eatenVal').textContent = eaten;
+    if(score > best){
+      best = score;
+      localStorage.setItem('snakeBest', best);
+      document.getElementById('bestVal').textContent = best;
+    }
+  }
+
+  // ---------- Drawing ----------
+  function drawBoardBackground(){
+    ctx.fillStyle = '#162a1c';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    // checker pattern subtle
+    for(let y=0;y<CELLS;y++){
+      for(let x=0;x<CELLS;x++){
+        if((x+y)%2===0){
+          ctx.fillStyle = 'rgba(255,255,255,0.02)';
+          ctx.fillRect(x*GRID, y*GRID, GRID, GRID);
+        }
+      }
+    }
+  }
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawSnake(){
+    const c = COLORS[snakeColorIdx];
+    snake.forEach((seg, i) => {
+      const px = seg.x*GRID, py = seg.y*GRID;
+      ctx.fillStyle = i === 0 ? c.head : c.body;
+      roundRect(px+1.5, py+1.5, GRID-3, GRID-3, 6);
+      ctx.fill();
+      if(i===0){
+        // eyes
+        ctx.fillStyle = '#10180f';
+        const ex1 = px + (dir.x===1?GRID-7: dir.x===-1?5: GRID/2-4);
+        const ex2 = px + (dir.x===1?GRID-7: dir.x===-1?5: GRID/2+2);
+        const ey1 = py + (dir.y===1?GRID-7: dir.y===-1?5: GRID/2-4);
+        const ey2 = py + (dir.y===1?GRID-7: dir.y===-1?5: GRID/2+2);
+        if(dir.x !== 0){
+          ctx.fillRect(ex1, py+5, 3, 3);
+          ctx.fillRect(ex1, py+GRID-8, 3, 3);
+        } else {
+          ctx.fillRect(px+5, ey1, 3, 3);
+          ctx.fillRect(px+GRID-8, ey1, 3, 3);
+        }
+      }
+    });
+  }
+
+  // ---------- Fruit shapes (drawn with canvas paths, no emoji/font dependency) ----------
+  function drawFruitShape(c, type, cx, cy, r){
+    c.save();
+    c.translate(cx, cy);
+    switch(type){
+
+      case 'apple': {
+        c.fillStyle = '#e2483c';
+        c.beginPath();
+        c.arc(-r*0.32, 0, r*0.72, 0, Math.PI*2);
+        c.arc(r*0.32, 0, r*0.72, 0, Math.PI*2);
+        c.fill();
+        // highlight
+        c.fillStyle = 'rgba(255,255,255,0.25)';
+        c.beginPath();
+        c.arc(-r*0.25, -r*0.25, r*0.22, 0, Math.PI*2);
+        c.fill();
+        // stem
+        c.strokeStyle = '#5a3a22';
+        c.lineWidth = Math.max(1, r*0.14);
+        c.beginPath();
+        c.moveTo(0, -r*0.75);
+        c.lineTo(r*0.08, -r*1.15);
+        c.stroke();
+        // leaf
+        c.fillStyle = '#4caf50';
+        c.beginPath();
+        c.ellipse(r*0.32, -r*1.0, r*0.28, r*0.16, -0.5, 0, Math.PI*2);
+        c.fill();
+        break;
+      }
+
+      case 'strawberry': {
+        c.fillStyle = '#e0314d';
+        c.beginPath();
+        c.moveTo(0, -r*0.55);
+        c.quadraticCurveTo(r*0.95, -r*0.5, r*0.7, r*0.5);
+        c.quadraticCurveTo(r*0.35, r*1.05, 0, r*1.05);
+        c.quadraticCurveTo(-r*0.35, r*1.05, -r*0.7, r*0.5);
+        c.quadraticCurveTo(-r*0.95, -r*0.5, 0, -r*0.55);
+        c.fill();
+        // seeds
+        c.fillStyle = '#ffe27a';
+        const seedPositions = [[-0.32,-0.1],[0.0,-0.2],[0.32,-0.1],[-0.38,0.35],[0.0,0.45],[0.38,0.35],[-0.18,0.75],[0.18,0.75]];
+        seedPositions.forEach(([sx,sy])=>{
+          c.beginPath();
+          c.ellipse(sx*r, sy*r, r*0.06, r*0.09, 0, 0, Math.PI*2);
+          c.fill();
+        });
+        // leaf top
+        c.fillStyle = '#4caf50';
+        for(let i=-2;i<=2;i++){
+          c.beginPath();
+          c.moveTo(0, -r*0.55);
+          c.lineTo(i*r*0.22, -r*0.95 - Math.abs(i)*r*0.05);
+          c.lineTo((i+ (i<0?0.35:-0.35))*r*0.22, -r*0.55);
+          c.closePath();
+          c.fill();
+        }
+        break;
+      }
+
+      case 'watermelon': {
+        // slice shape: half-circle wedge
+        c.fillStyle = '#3aa14a';
+        c.beginPath();
+        c.moveTo(0,0);
+        c.arc(0,0,r*1.05, Math.PI*1.0, Math.PI*1.5);
+        c.closePath();
+        c.fill();
+        c.fillStyle = '#f3f0d8';
+        c.beginPath();
+        c.moveTo(0,0);
+        c.arc(0,0,r*0.92, Math.PI*1.0, Math.PI*1.5);
+        c.closePath();
+        c.fill();
+        c.fillStyle = '#e2483c';
+        c.beginPath();
+        c.moveTo(0,0);
+        c.arc(0,0,r*0.78, Math.PI*1.0, Math.PI*1.5);
+        c.closePath();
+        c.fill();
+        // seeds
+        c.fillStyle = '#222';
+        const seeds = [[-0.35,-0.35],[-0.15,-0.55],[-0.5,-0.15],[-0.55,-0.5],[-0.25,-0.15]];
+        seeds.forEach(([sx,sy])=>{
+          c.beginPath();
+          c.ellipse(sx*r, sy*r, r*0.05, r*0.08, 0.8, 0, Math.PI*2);
+          c.fill();
+        });
+        break;
+      }
+
+      case 'grape': {
+        c.fillStyle = '#8a4fd1';
+        const circles = [[0,-0.55],[ -0.45,-0.15],[0.45,-0.15],[-0.7,0.35],[-0.2,0.35],[0.3,0.35],[0.75,0.35],[-0.45,0.85],[0.05,0.85],[0.5,0.85]];
+        circles.forEach(([gx,gy])=>{
+          c.beginPath();
+          c.arc(gx*r*0.7, gy*r*0.7, r*0.32, 0, Math.PI*2);
+          c.fill();
+        });
+        c.fillStyle = 'rgba(255,255,255,0.18)';
+        circles.forEach(([gx,gy])=>{
+          c.beginPath();
+          c.arc(gx*r*0.7 - r*0.08, gy*r*0.7 - r*0.08, r*0.1, 0, Math.PI*2);
+          c.fill();
+        });
+        // stem
+        c.strokeStyle = '#5a3a22';
+        c.lineWidth = Math.max(1, r*0.12);
+        c.beginPath();
+        c.moveTo(0, -r*0.85);
+        c.lineTo(0, -r*1.2);
+        c.stroke();
+        break;
+      }
+
+      case 'banana': {
+        c.strokeStyle = '#e8c93c';
+        c.fillStyle = '#e8c93c';
+        c.beginPath();
+        c.moveTo(-r*0.7, r*0.75);
+        c.quadraticCurveTo(-r*0.9, -r*0.3, r*0.15, -r*0.95);
+        c.quadraticCurveTo(r*0.35, -r*1.0, r*0.5, -r*0.85);
+        c.quadraticCurveTo(r*0.05, -r*0.55, -r*0.15, r*0.15);
+        c.quadraticCurveTo(-r*0.3, r*0.7, -r*0.35, r*0.95);
+        c.closePath();
+        c.fill();
+        // tip
+        c.fillStyle = '#6b5a2a';
+        c.beginPath();
+        c.ellipse(r*0.45, -r*0.88, r*0.08, r*0.12, 0.6, 0, Math.PI*2);
+        c.fill();
+        // shading line
+        c.strokeStyle = 'rgba(0,0,0,0.15)';
+        c.lineWidth = Math.max(1, r*0.05);
+        c.beginPath();
+        c.moveTo(-r*0.55, r*0.55);
+        c.quadraticCurveTo(-r*0.55, -r*0.15, r*0.1, -r*0.75);
+        c.stroke();
+        break;
+      }
+
+      case 'orange': {
+        c.fillStyle = '#f0922e';
+        c.beginPath();
+        c.arc(0, 0, r*0.95, 0, Math.PI*2);
+        c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.2)';
+        c.beginPath();
+        c.arc(-r*0.3, -r*0.3, r*0.25, 0, Math.PI*2);
+        c.fill();
+        // texture dots
+        c.fillStyle = 'rgba(180,90,10,0.25)';
+        for(let i=0;i<10;i++){
+          const ang = Math.random()*Math.PI*2;
+          const rad = Math.random()*r*0.7;
+          c.beginPath();
+          c.arc(Math.cos(ang)*rad, Math.sin(ang)*rad, r*0.04, 0, Math.PI*2);
+          c.fill();
+        }
+        // leaf
+        c.fillStyle = '#4caf50';
+        c.beginPath();
+        c.ellipse(0, -r*0.95, r*0.22, r*0.13, 0, 0, Math.PI*2);
+        c.fill();
+        break;
+      }
+
+      case 'cherry': {
+        c.fillStyle = '#c41e3a';
+        c.beginPath();
+        c.arc(-r*0.38, r*0.45, r*0.42, 0, Math.PI*2);
+        c.fill();
+        c.beginPath();
+        c.arc(r*0.38, r*0.55, r*0.42, 0, Math.PI*2);
+        c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.22)';
+        c.beginPath();
+        c.arc(-r*0.48, r*0.32, r*0.12, 0, Math.PI*2);
+        c.fill();
+        c.beginPath();
+        c.arc(r*0.28, r*0.42, r*0.12, 0, Math.PI*2);
+        c.fill();
+        // stems
+        c.strokeStyle = '#4d7a3a';
+        c.lineWidth = Math.max(1, r*0.1);
+        c.beginPath();
+        c.moveTo(-r*0.38, r*0.05);
+        c.quadraticCurveTo(-r*0.2, -r*0.9, r*0.05, -r*1.05);
+        c.stroke();
+        c.beginPath();
+        c.moveTo(r*0.38, r*0.15);
+        c.quadraticCurveTo(r*0.2, -r*0.85, r*0.05, -r*1.05);
+        c.stroke();
+        break;
+      }
+
+      case 'pineapple': {
+        // body
+        c.fillStyle = '#e8b03d';
+        c.beginPath();
+        c.ellipse(0, r*0.15, r*0.62, r*0.85, 0, 0, Math.PI*2);
+        c.fill();
+        // crosshatch texture
+        c.strokeStyle = 'rgba(120,70,10,0.4)';
+        c.lineWidth = Math.max(1, r*0.05);
+        for(let i=-2;i<=2;i++){
+          c.beginPath();
+          c.moveTo(-r*0.6, r*0.15 + i*r*0.25);
+          c.quadraticCurveTo(0, r*0.15 + i*r*0.25 + r*0.18, r*0.6, r*0.15 + i*r*0.25);
+          c.stroke();
+        }
+        // crown leaves
+        c.fillStyle = '#3f8a4a';
+        for(let i=-2;i<=2;i++){
+          c.beginPath();
+          c.moveTo(0, -r*0.55);
+          c.lineTo(i*r*0.16, -r*1.25 - Math.abs(i)*r*0.05);
+          c.lineTo((i+(i<0?0.3:-0.3))*r*0.16, -r*0.55);
+          c.closePath();
+          c.fill();
+        }
+        break;
+      }
+
+      default: {
+        c.fillStyle = '#e2483c';
+        c.beginPath();
+        c.arc(0,0,r*0.85,0,Math.PI*2);
+        c.fill();
+      }
+    }
+    c.restore();
+  }
+
+  function drawFood(){
+    const f = FRUITS[fruitIdx];
+    drawFruitShape(ctx, f.draw, food.x*GRID + GRID/2, food.y*GRID + GRID/2, GRID*0.42);
+  }
+
+  function draw(){
+    drawBoardBackground();
+    drawFood();
+    drawSnake();
+  }
+
+  // ---------- Game loop ----------
+  function step(){
+    if(paused) return;
+    dir = nextDir;
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+    // wall collision
+    if(head.x < 0 || head.x >= CELLS || head.y < 0 || head.y >= CELLS){
+      return gameOver();
+    }
+    // self collision
+    if(snake.some(s => s.x === head.x && s.y === head.y)){
+      return gameOver();
+    }
+
+    snake.unshift(head);
+
+    if(head.x === food.x && head.y === food.y){
+      const f = FRUITS[fruitIdx];
+      score += f.points;
+      eaten += 1;
+      fruitIdx = (fruitIdx + 1) % FRUITS.length; // cycle to next fruit type
+      placeFood();
+      updateStats();
+      renderFruitList();
+      if(speed > 60) speed -= 2; // speed up slightly
+      restartLoop();
+    } else {
+      snake.pop();
+    }
+
+    draw();
+  }
+
+  function restartLoop(){
+    clearInterval(timer);
+    timer = setInterval(step, speed);
+  }
+
+  function gameOver(){
+    clearInterval(timer);
+    running = false;
+    const overlay = document.getElementById('overlay');
+    overlay.classList.remove('hidden');
+    document.getElementById('overlayTitle').textContent = 'GAME OVER';
+    document.getElementById('overlayText').textContent =
+      `You scored ${score} points and ate ${eaten} fruit${eaten===1?'':'s'}. Try again?`;
+    document.getElementById('startBtn').textContent = 'PLAY AGAIN';
+  }
+
+  function startGame(){
+    document.getElementById('overlay').classList.add('hidden');
+    resetGame();
+    running = true;
+    draw();
+    restartLoop();
+  }
+
+  // ---------- Controls ----------
+  const KEYMAP = {
+    ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
+    w:{x:0,y:-1}, s:{x:0,y:1}, a:{x:-1,y:0}, d:{x:1,y:0},
+    W:{x:0,y:-1}, S:{x:0,y:1}, A:{x:-1,y:0}, D:{x:1,y:0},
+  };
+
+  window.addEventListener('keydown', (e) => {
+    if(e.key === ' '){
+      e.preventDefault();
+      if(running) paused = !paused;
+      return;
+    }
+    const d = KEYMAP[e.key];
+    if(!d || !running) return;
+    // prevent reversing directly into self
+    if(d.x === -dir.x && d.y === -dir.y) return;
+    nextDir = d;
+  });
+
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    clearInterval(timer);
+    running = false;
+    document.getElementById('overlay').classList.remove('hidden');
+    document.getElementById('overlayTitle').textContent = 'SNAKE';
+    document.getElementById('overlayText').textContent = 'Eat fruit, grow long, don\'t bite yourself or the walls. Pick your colors, then start.';
+    document.getElementById('startBtn').textContent = 'START GAME';
+    resetGame();
+    draw();
+  });
+
+  // initial render
+  resetGame();
+  draw();
+})();
+</script>
+
+</body>
+</html>
